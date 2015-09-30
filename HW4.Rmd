@@ -1,0 +1,291 @@
+---
+title: "HW4"
+author: "John Horton"
+date: "September 27, 2015"
+output: html_document
+---
+
+Question 1:
+
+Part a:
+```{r}
+#In parts a through d, we use the c() function to create the desired vectors, as specified in the prompts
+#a is a vector containing the integers in the interval [1,20]
+a <- c(1:20)
+print(a)
+```
+
+Part b:
+```{r}
+#b is a vector containing those same integers in a, now in reverse
+b <- c(20:1)
+print(b)
+```
+
+Part c:
+```{r}
+#c is nearly the concatenation of a and b, except the middle 20 appears only once
+c <- c(1:20,19:1)
+print(c)
+```
+
+Part d:
+```{r}
+#tmp created, as per the prompt
+tmp <- c(4,6,3)
+print(tmp)
+```
+
+Part e:
+```{r}
+#In parts e through g, we use the rep() function to create the desired vectors, as specified in the prompts
+#If we specify our desired output length as 30, the vector (4,6,3) will be repeated 10 times, implying there are 10 occurrences of 4
+e <- rep(tmp, length.out = 30)
+print(e)
+```
+
+Part f:
+```{r}
+#If we specify our desired output length as 31, the vector (4,6,3) will be repeated 10 times as above; the first element of (4,6,3) tacked on the end as the 31'st element, giving us the extra 4 we need
+f <- rep(tmp, length.out = 31)
+print(f)
+```
+
+Part g:
+```{r}
+#Here we simply specify the amount of times we would like to repeat each element in the vector (4,6,3) by passing rep() the vector created by c(10,20,30)
+g <- rep(tmp, c(10,20,30))
+print(g)
+```
+
+Question 2:
+
+```{r}
+#The vector x contains our desired values of x as per the prompt, i.e. x is the vector (3,3.1,...,5.9,6). To create x, we pass seq() the first value of our vector, the final value, and the increment represented as by=0.1
+x <- seq(3.0,6.0,by=0.1)
+#Now that we have our vector x, we perform the desired operation
+y <- (exp(x))*cos(x)
+print(y)
+```
+
+Question 3:
+
+Part a:
+```{r}
+#We create the vector x, as in Question 2
+x <- seq(3,36,by=3)
+#We create the vector y by subtracting 2 from each value in x
+y <- x-2
+#Now that we have vectors x and y to represent the exponents called for in the prompt, we can perform the desired operation
+z <- (0.1^x)*(0.2^y)
+print(z)
+```
+
+Part b:
+```{r}
+#We create the vector x to represent the exponents and denominators called for in the question prompt 
+x <- c(1:25)
+#Now that we have a vector to represent the required exponents and denominators, we can perform the desired operation
+y <- (2^x)/x
+print(y)
+```
+
+Question 4:
+
+Part a:
+```{r}
+#We create the vector x to represent the values i=[10,100] over which we take the desired sum
+x <- c(10:100)
+#We create the vector y to represent the inner part of the sum at each i in [10,100]
+y <- (x^3 + 4*x^2)
+#We now have the desired sum value at each i in [1,100] contained in the vector y; to perform the full sum, we simply take the sum of all values in the vector y
+z <- sum(y)
+print(z)
+```
+
+Part b:
+```{r}
+#We create the vector x to represent the values i=[1,25] over which we take the desired sum
+x <- c(1:25)
+#We create the vector y to represent the inner part of the sum at each i in [1,25]
+y <- (2^x)/x + (3^x)/(x^2)
+#We now have the desired sum value at each i in [1,25] contained in the vector y; to perform the full sum. we simply take the sum of all values in the vector y
+z <- sum(y)
+print(z)
+```
+
+Question 5:
+
+Part a:
+```{r}
+#We create the vector x to represent the values 1,2,...,30 as in "label 1","label 2",...,"label 30"
+x <- c(1:30)
+#The paste function here concatenates "label" and x with a space in between (default) for each value of x
+y <- paste("label",x)
+print(y)
+```
+
+Part b:
+```{r}
+#We create the vector x to represent the values 1,2,...,30 as in "fn1","fn2",...,"fn30"
+x <- c(1:30)
+#The paste function here concatenates "fn" and x for each value of x; as we have specified no separation between characters with sep="", there will not be a space between "fn" and the number following
+y <- paste("fn",x,sep = "")
+print(y)
+```
+
+Question 6:
+
+Part a:
+```{r}
+#Here we execute the code to generate our two sets of random numbers, as in the prompt
+set.seed(50)
+xVec <- sample(0:999,250,replace=T)
+yVec <- sample(0:999,250,replace=T)
+#We initialize the vector zVec to a simple vector containing 249 values, so we may later perform the desired operations by overwriting each element zVec[i] rather than creating new vectors
+zVec <- c(1:249)
+
+#We loop through each value in zVec so we may overwrite each value with the output of our desired operation
+for(i in 1:249){
+  zVec[i] <- yVec[i+1] - xVec[i]
+}
+
+print(xVec)
+print(yVec)
+print(zVec)
+```
+
+Part b:
+```{r}
+#We loop through each value in zVec so we may overwrite each value with the output of our desired operation
+for(i in 1:249){
+  zVec[i] <- (sin(yVec[i]))/(cos(xVec[i+1]))
+}
+
+print(zVec)
+```
+
+Part c:
+```{r}
+#We recreate zVec as we now only have 248 output entries
+zVec <- c(1:248)
+#We loop through each value in zVec so we may overwrite each value with the output of our desired operation
+for(i in 1:248){
+  zVec[i] <- xVec[i] + 2*xVec[i+1] - xVec[i+2]
+}
+
+print(zVec)
+```
+
+Part d:
+```{r}
+#We loop through each value in zVec so we may overwrite each value with the output of our desired operation
+for(i in 1:249){
+  zVec[i] <- (exp(-xVec[i+1]))/(xVec[i] + 10)
+}
+sum <- sum(zVec)
+print(sum)
+```
+
+Question 7:
+
+Part a:
+```{r}
+#We sort the vector yVec so we may see which values are larger than 600
+sortY <- sort(yVec,FALSE)
+#We initialize the index variable i to 1
+i <- 1
+#If the i'th value in sortY is <=600, we increase i by 1; when we come out of the loop, i will equal the index of the first element in sortY that is greater than 600
+while(sortY[i]<=600){
+    i <- i+1
+}
+#We create the vector largeY to contain all elements from sortY that are greater than 600; as i is the index of the first element in sortY that is greater than 600, we need to remove all elements in sortY that come before index i; the line below does so by creating largeY out of sortY without those elements sortY at indices 1 through i-1
+largeY <- sortY[-c(1:i-1)]
+print(largeY)
+```
+
+Part b:
+```{r}
+#We create the vector sortIndex to store the yVec indices corresponding to each sorted element in sortY
+sortIndex <- sort(yVec,FALSE,index.return=TRUE)$ix
+#Our index variable i has not changed from above, so we may use it again to isolate the yVec indices corresponding to elements in sortY that are greater than 600
+print(sortIndex[-c(1:i-1)])
+```
+
+Part c:
+```{r}
+#Our vector xIndex contains the yVec indices corresponding to the elements in sortY that are greater than 600
+xIndex <- sortIndex[-c(1:i-1)]
+#We now print the elements in xVec at the indices stored in xIndex, as described above
+print(xVec[xIndex])
+```
+
+Part d:
+```{r}
+#We define the mean of xVec
+xBar <- mean(xVec)
+#We perform the desired operation, as per the prompt
+zVec <- sqrt(abs(xVec - xBar))
+print(zVec)
+```
+
+Part e:
+```{r}
+#We define the max of yVec
+maxY <- max(yVec)
+#We initialize the count variable k to 0
+k <- 0
+#We loop through all values in yVec, to see if they are within 200 of maxY
+for(j in 1:250){
+  if((maxY-yVec[j])<200){
+    #If yVec[j] is within 200 of maxY, we increase k by 1
+    k <- k+1
+  }
+}
+#When we come out of the loop, k will equal the number of values in yVec that are within 200 of maxY; k is printed below 
+print(k)
+```
+
+Part f:
+```{r}
+#We initialize the count variable k to 0
+k <- 0
+#We loop through all values in xVec, to see if they are divisible by 2
+for(j in 1:250){
+  if(xVec[j]%%2 == 0){
+    #If xVec[j] is divisible by 2, we increase k by 1
+    k <- k+1
+  }
+}
+#When we come out of the loop, k will equal the number of values in xVec that are divisible by 2; k is printed below
+print(k)
+```
+
+Part g:
+```{r}
+#We reorder xVec as per the order of increasing values in yVec; recall that sortIndex represents the yVec indices corresponding to each sorted element in sortY; we now reorder xVec using those same indices
+sortX <- xVec[sortIndex]
+print(sortX)
+```
+
+Part h:
+```{r}
+#We define vector l to represent the indices requested in the prompt
+l <- seq(1,250,by=3)
+#We pull the elements in yVec at those desired indices
+yVal <- yVec[l]
+print(yVal)
+```
+
+Question 8:
+
+```{r}
+#We create the vector x to represent the numerators in our fractions, as per the prompt
+x <- seq(2,38,by=2)
+#We create the vector y <- x+1 to represent the denominators in our fractions, as per the prompt
+y <- x+1
+#The cumprod function will return a vector of values to be added as per the prompt, i.e. the function returns (2/3, 2/3*4/5, ...); to achieve the desired sum, we take the sum of that vector and add 1 in front
+z <- 1 + sum(cumprod(x/y))
+print(z)
+```
+
