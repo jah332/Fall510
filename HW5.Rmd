@@ -35,8 +35,8 @@ Extract_Num <- function(dataFrame){
 
 #Tests the function
 testNum = Extract_Num(diamonds)
-print(diamonds)
-print(testNum)
+#print(diamonds)
+#print(testNum)
 ```
 
 Question 2:
