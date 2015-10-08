@@ -1,0 +1,139 @@
+---
+title: "HW5"
+author: "John Horton"
+date: "October 6, 2015"
+output: html_document
+---
+
+Setup:
+
+```{r}
+#Load required packages
+require(ggplot2)
+require(grid)
+
+#Load diamonds dataframe
+data(diamonds)
+```
+
+Question 1:
+
+The function below takes a dataframe from the user and returns a new dataframe containing only the numeric columns of the original dataframe. More detail on the function's operation is provided below in the inline comments.
+
+Parameters:
+ - dataFrame: the dataframe passed by the user
+ 
+Return:
+ - numDataFrame: the dataframe containing only the numeric columns of dataFrame
+ 
+```{r}
+Extract_Num <- function(dataFrame){
+  #We use the sapply function on dataFrame to isolate only those columns in dataFrame for which 'is.numeric' returns 'TRUE'
+  numDataFrame <- dataFrame[sapply(dataFrame,is.numeric)]
+  return(numDataFrame)
+}
+
+#Tests the function
+testNum = Extract_Num(diamonds)
+print(diamonds)
+print(testNum)
+```
+
+Question 2:
+
+The function below takes a dataframe from the user and returns a new dataframe containing the Pearson correlation coefficient for each pair of numeric columns in the original dataframe. More detail on the function's operation is provided below in the inline comments.
+
+Parameters:
+ - dataFrame: the dataframe passed by the user
+ 
+ Return:
+  - corrFrame: the dataframe containing the Pearson correlation coefficient for each pair of numeric columns in dataFrame
+  
+```{r}
+Column_Corr <- function(dataFrame){
+  #We first call Extract_Num to isolate the numeric columns of dataFrame
+  dataFrame <- Extract_Num(dataFrame)
+  #The vector corrTitle, which will hold the titles of each pair of numeric columns, is initialized as an empty vector
+  #Each value in this vector will be of the form 'col1-col2', where col1 and col2 are the titles of column 1 and column 2
+  corrTitle <- c()
+  #The vector corrValue, which will hold the Pearson correlation coefficient for each pair of numeric columns, is initialized as an empty vector
+  corrValue <- c()
+  #The index variable k is initialized to 1; k corresponds to the total number of non-repeating pairs of numeric columns in dataFrame
+  k = 1
+  #We loop through each column in dataFrame so that we may take the correlation between that column and the next
+  for(i in 1:(ncol(dataFrame)-1)){
+    #We start our next loop at i+1, so that we do not repeat pairs of columns
+    #Starting our loop at i+1 also avoids taking unneccessary correlations between a column and itself, i.e. we do not take the correlation between carat and carat, as that is obviously 1
+    for(j in (i+1):(ncol(dataFrame))){
+      #We take the title of the current pair of columns
+      corrTitle[k] <- paste(colnames(dataFrame)[i],"-",colnames(dataFrame)[j],sep="")
+      #We take the correlation of the current pair of columns
+      corrValue[k] <- cor(dataFrame[,i],dataFrame[,j],method="pearson")
+      #We increase k by 1, as we now consider the next pair
+      k <- k+1
+    }
+  }
+  #We initialize the return variable to an empty dataframe with one row for each pair of columns taken above
+  corrFrame <- data.frame(matrix(ncol=0,nrow=k-1))
+  #We insert two new columns to our return dataframe, one for the title of each pair of columns, another for the correlation of each pair of columns
+  corrFrame["Columns"] <- corrTitle
+  corrFrame["Correlation"] <- corrValue
+  return(corrFrame)
+}
+
+#Tests the function
+testCorr = Column_Corr(diamonds)
+#print(diamonds)
+print(testCorr)
+
+```
+
+Question 3:
+
+This function takes a dataframe from the user and returns scatter plots for each pair of numeric columns in that dataframe. The title of each scatter plot will contain the variables contained in that plot and the Pearson correlation coefficient for that pair of variables. Plots are returned in a list.
+
+Parameters:
+ - dataFrame: the dataframe passed by the user
+ 
+Return:
+ - corrPlots: the list containing a plot for each pair of numeric columns in dataFrame
+ 
+```{r}
+Corr_Plot <- function(dataFrame){
+  #We first call Extract_Num to isolate the numeric columns of dataFrame
+  dataFrame <- Extract_Num(dataFrame)
+  #The list corrPlots, which will hold the scatter plot for each pair of numeric columns, is initialized as an empty list
+  corrPlots <- list()
+  #The index variable k is initialized to 1; k corresponds to the total number of non-repeating pairs of numeric columns in dataFrame
+  k <- 1
+    #We loop through each column in dataFrame so that we may plot that column and the next, and take their correlation
+  for(i in 1:(ncol(dataFrame)-1)){
+    #We start our next loop at i+1, so that we do not repeat pairs of columns
+    #Starting our loop at i+1 also avoids taking unneccessary correlations between a column and itself, i.e. we do not take the correlation between carat and carat, as that is obviously 1
+    #We save even more time from this change here than in Column_Corr as we avoid producing unneccessary plots, important here because producing each plot takes a noticeable amount of computing time 
+    for(j in (i+1):(ncol(dataFrame))){
+      #The dataframe plotFrame is created to hold just the data that we wish to plot in this iteration of the loop
+      plotFrame <- data.frame(dataFrame[,i],dataFrame[,j])
+      #xLabel stores the name of the column to be plotted on the x axis, so we may avoid calling a function inside our aes call below
+      xLabel <- colnames(dataFrame)[i]
+      #yLabel stores the name of the column to be plotted on the y axis, so we may avoid calling a function inside our aes call below
+      yLabel <- colnames(dataFrame)[j]
+      #We set the column names in plotFrame to xLabel and yLabel, so that ggplot will recognize them
+      colnames(plotFrame) <- c(xLabel,yLabel)
+      #xyCorr stores the correlation between the two columns contained in this plot, which will be added to the title of this plot as per the question prompt
+      xyCorr <- cor(dataFrame[,i],dataFrame[,j],method="pearson")
+      #Here we make the appropriate ggplot calls to produce our scatter plot
+      #We feed ggplot the dataframe plotFrame, call aes_string to set the axes, call geom_point to produce a scatter plot rather than another type of graph, and call ggtitle to give the plot the desired title
+      #Each plot is stored in our list of plots, which is returned once we have gone through both loops
+      corrPlots[[k]] <- (ggplot(plotFrame,aes_string(x=xLabel,y=yLabel))+geom_point()+ggtitle(paste("Correlation between",xLabel,"and",yLabel,":",xyCorr)))
+      #We increase k by 1, as we now consider the next pair
+      k <- k+1
+    }
+  }
+  return(corrPlots)
+}
+
+#Tests the function
+testPlots = Corr_Plot(diamonds)
+print(testPlots)
+```
