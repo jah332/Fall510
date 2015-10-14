@@ -1,0 +1,154 @@
+---
+title: "TEST1_R"
+author: "John Horton"
+date: "October 13, 2015"
+output: html_document
+---
+
+Test 1 R
+
+Setup:
+
+```{r}
+#Load required packages
+require(ggplot2)
+require(grid)
+require(plyr)
+```
+
+Question 1:
+
+This function takes a dataframe from the user and adds to it a logical column with a TRUE/FALSE entry for each row in the dataframe, with some given percentage of those entries being TRUE and the rest being FALSE.
+
+Parameters:
+- dataFrame: the dataframe passed by the user; the new logical column will be added to that dataframe
+ 
+Return:
+- returnFrame: the user's dataframe, with the logical column added on
+
+```{r}
+addLogical <- function(dataFrame){
+  #Here we generate a vector of random values between 0 and 1, generating a random value for each row in the user's dataframe
+  randVec <- runif(nrow(diamonds),0.0,1.0)
+  #We initialize logicVec as an empty vector
+  logicVec <- c()
+  #The variable pctTrue represents the percentage of TRUE entries in the new logical column of the user's dataframe; we use 0.4375 as per Professor G's posted interpretation of the question
+  pctTrue <- 0.4375
+  #We loop through each value in randVec so we may assign corresponding values to logicVec
+  for(i in 1:length(randVec)){
+    #If the value randVec[i] is less than pctTrue, we add a TRUE to logicVec; otherwise, we add a FALSE to logicVec
+    if(randVec[i] <= pctTrue){
+      logicVec[i] <- TRUE
+    }
+    else{
+      logicVec[i] <- FALSE
+    }
+  }
+  #We initialize the return dataframe and add the logical column
+  returnFrame <- data.frame(dataFrame)
+  returnFrame$logical <- logicVec
+  return(returnFrame)
+}
+
+#Tests the function
+logFrame <- addLogical(diamonds)
+#print(testFrame)
+
+#To quickly test the function and to avoid printing the full dataframe, we may look at the dimensions of the new dataframe to make sure they check out
+print(dim(diamonds)[1])
+print(dim(diamonds)[2])
+print(dim(logFrame)[1])
+print(dim(logFrame)[2])
+```
+
+Question 2:
+
+This function takes a dataframe from the user and returns a dataframe containing only the columns of the original dataframe that represent factors or logical variables.
+
+Parameters:
+- dataFrame: the dataframe passed by the user
+
+Return:
+- returnFrame: a dataframe containing only the columns of the user's dataframe that represent factors or logical variables
+
+```{r}
+Extract_Fac <- function(dataFrame){
+  #We use the sapply function on dataFrame to isolate only those columns in dataFrame for which 'is.factor' returns 'TRUE'
+  facDataFrame <- dataFrame[sapply(dataFrame,is.factor)]
+  #We use the sapply function on dataFrame to isolate only those columns in dataFRame for which 'is.logical' returns 'FALSE'
+  logDataFrame <- dataFrame[sapply(dataFrame,is.logical)]
+  #We merge facDataFrame and logDataFrame so that our returnFrame contains all factor columns and all logical columns
+  returnFrame <- data.frame(facDataFrame,logDataFrame)
+  return(returnFrame)
+}
+
+#Tests the function
+testFac = Extract_Fac(logFrame)
+#print(logFrame)
+#print(testFac)
+```
+
+Question 3:
+
+This function takes a dataframe from the user and returns a list of bar plots for each of the columns in the user's dataframe that represent factors or logical variables.
+
+Parameters:
+- dataFrame: the dataframe passed by the user
+
+Return:
+- facPlots: a list of bar plots for each column in dataFrame that represents a factor or a logical variable
+
+```{r}
+Factor_Plot <- function(dataFrame){
+  #We first extract all of the factor columns and logical columns from dataFrame
+  dataFrame <- Extract_Fac(dataFrame)
+  #We initialize facPlots as an empty list
+  facPlots <- list()
+  #We loop through each of the factor columns and logical columns in dataFrame
+  for(i in 1:ncol(dataFrame)){
+    #xLabel stores the name of the column to be plotted, so we may avoid calling a function inside our aes call below
+    xLabel <- colnames(dataFrame)[i]
+    #We call ggplot and geom_bar to produce a bar plot for each factor column and logical column in dataFrame
+    #Each such plot is then added to facPlots so that all plots may be returned
+    facPlots[[i]] <- ggplot(dataFrame,aes_string(xLabel))+geom_bar(fill="grey")
+  }
+  return(facPlots)
+}
+
+#Tests the function
+testPlots <- Factor_Plot(logFrame)
+print(testPlots)
+```
+
+Question 4:
+
+This function takes a dataframe from the user and returns a list of frequency tables for each of the columns in the user's dataframe that represent factors or logical variables.
+
+Parameters:
+- dataFrame: the dataframe passed by the user
+
+Return:
+- facTables: a list of frequency tables for each column in dataFrame that represents a factor or a logical variable
+
+```{r}
+Factor_Table <- function(dataFrame){
+  #We first extract all of the factor columns and logical columns from dataFrame
+  dataFrame <- Extract_Fac(dataFrame)
+  #We initialize facTables as an empty list
+  facTables <- list()
+  #We loop through each of the factor columns and logical columns in dataFrame
+  for(i in 1:ncol(dataFrame)){
+    #varName stores the name of the column for which we are taking the next frequency table, so we may avoid calling a function inside our count call below
+    varName <- colnames(dataFrame)[i]
+    #We use the count function from the plyr package to construct frequency tables for each factor column and logical column in dataFrame
+    #The count function returns the frequency tables as dataframes, each of which is stored in facTables so that all tables may be returned 
+    facTables[[i]] <- count(dataFrame,varName)
+  }
+  return(facTables)
+}
+
+#Tests the function
+testTables <- Factor_Table(logFrame)
+print(testTables)
+```
+
