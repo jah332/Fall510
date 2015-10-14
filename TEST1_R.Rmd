@@ -18,7 +18,7 @@ require(plyr)
 
 Question 1:
 
-This function takes a dataframe from the user and adds to it a logical column with a TRUE/FALSE entry for each row in the dataframe, with some given percentage of those entries being TRUE and the rest being FALSE.
+This function takes a dataframe from the user and adds to it a logical column with a TRUE/FALSE entry for each row in the dataframe, with some given percentage of those entries being TRUE and the rest being FALSE. I used this mechanism of randomly assigning TRUE/FALSE to each entry in diamonds as no direction was given as to which entries should receive TRUE and which should receive FALSE, only a ratio of TRUE entries to FALSE entries. As entries are randomly assigned, the TRUE/FALSE ratio will never be exact, but will be quite close to the given ratio as diamonds contains some 50,000+ entries.
 
 Parameters:
 - dataFrame: the dataframe passed by the user; the new logical column will be added to that dataframe
