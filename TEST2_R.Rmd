@@ -1,0 +1,443 @@
+---
+title: "TEST2_R"
+author: "John Horton"
+date: "December 3, 2015"
+output: html_document
+---
+
+Setup:
+
+```{r}
+#Load required packages
+require(ggplot2)
+require(grid)
+require(plyr)
+
+#Load required dataframes
+abalone <- read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data",header = FALSE)
+names(abalone) <- c("sex", "length", "diameter", "height", "weight.whole", "weight.shucked", "weight.viscera", "weight.shell", "rings")
+data(diamonds)
+data(faithful)
+```
+
+Question 1:
+
+```{r}
+#The vector sample sizes holds the specified sample percentages
+sampleSizes <- c(0.01,0.10,0.25,0.50,0.80,1.00)
+#We initialize the list sampleFrame to hold each sample
+sampleFrame <- list()
+#The dataframe sampleStats is generated with 6 columns and 4 rows, as per the prompt
+sampleStats <- data.frame(matrix(ncol=6,nrow=4))
+#The columns of sampleStats are named as per the prompt
+names(sampleStats) <- paste(sampleSizes*100,"%",sep="")
+#The rows of sampleStats are named as per the prompt
+row.names(sampleStats) <- c("SampleMin","SampleMax","SampleMean","SampleVar")
+#We now loop through each column in sampleStats to generate a sample containing that column's percentage of the original dataset
+for(i in 1:ncol(sampleStats)){
+  #We now take a sample of the current size
+  sampleFrame[[i]] <- abalone[sample(nrow(abalone),sampleSizes[i]*nrow(abalone)),]
+  #Now that we have our sample, we loop through each row in sampleStats to take the desired summary statistic
+  for(j in 1:nrow(sampleStats)){
+    #Min, Max, Mean, and Variance are placed in their appropriate rows
+    if(j==1){
+      sampleStats[j,i] <- min(sampleFrame[[i]]$weight.whole)
+    } else if(j==2){
+      sampleStats[j,i] <- max(sampleFrame[[i]]$weight.whole)
+    } else if(j==3){
+      sampleStats[j,i] <- mean(sampleFrame[[i]]$weight.whole)
+    } else if(j==4){
+      sampleStats[j,i] <- var(sampleFrame[[i]]$weight.whole)
+    }
+  }
+}
+#Prints the dataframe of summary statistics for the samples
+print(sampleStats)
+```
+
+Question 2:
+
+The function samplePlots is designed to take a list of dataframes from the user and then produce a grid of histograms of the specified column for each of those dataframes. Each plot is titled according to a list of titles passed by the user. This function is designed specifically for use in this test.
+
+Parameters:
+- dataFrames: the list of dataframes passed by the user
+- myColTitles: the titles of the column of which the user would like a histogram for each dataframe
+- myTitles: the list of titles for each histogram
+
+```{r}
+samplePlots <- function(dataFrames,myColTitles,myTitles){
+  #We initialize the list sampleHisto to hold a histogram for each sample
+  sampleHisto <- list()
+  #We create a grid to hold those six histograms
+  pushViewport(viewport(layout=grid.layout(3,2)))
+  #We loop through each dataframe in dataFrames so that we may generate all of the desired histograms
+  for(i in 1:length(dataFrames)){
+    #We create the datframe currentFrame so that ggplot may recognize it (it cannot recognize elements of a list, even if they are dataframes)
+    currentFrame = data.frame(dataFrames[[i]])
+    #We specify the column of currentFrame which we would like to plot in this histogram
+    currentTitle = myColTitles[i]
+    #We add to our list of histograms a new histogram of the current dataframe, along with a title so we may keep track of which plot corresponds to which sample
+    sampleHisto[[i]] <- ggplot(currentFrame,aes_string(currentTitle)) + geom_histogram() + ggtitle(paste(myTitles[i]*100,"%",sep=""))
+  }
+  #The index variable i is initialized to keep track of which sample plot we must next place in the grid
+  i <- 1
+  #We loop through each row and column in our grid to fill the grid with the plots we generated above
+  for(j in 1:3){
+    for(k in 1:2){
+      #Plots are added to the grid
+      print(sampleHisto[[i]],vp=viewport(layout.pos.row=j,layout.pos.col=k))
+      #We increase i by 1 to move on to the next plot
+      i <- i+1
+    }
+  }
+}
+#Generates the histograms as per the prompt and prints them
+samplePlots(sampleFrame,rep("weight.whole",6),sampleSizes)
+```
+
+Question 3:
+
+```{r}
+#The vector loopSizes holds all sample sizes given in sampleSizes that are less than 1.00 (100%)
+loopSizes <- sampleSizes[sampleSizes<1.00]
+#The dataframe loopMeans is generated with 5 columns and 1000 rows, as per the prompt
+loopMeans <- data.frame(matrix(ncol=5,nrow=1000))
+#The columns of loopMeans are named as per the prompt
+names(loopMeans) <- c("SampleMean1Pct","SampleMean10Pct","SampleMean25Pct","SampleMean50Pct","SampleMean80Pct")
+#We now loop through each column in loopMeans to generate a sample containing that column's percentage of the original dataset
+for(i in 1:length(loopSizes)){
+  #We loop over the range 1:1000 to generate 1000 samples of each size
+  for(j in 1:1000){
+    #We now take a sample of the current size
+    sampleFrame <- abalone[sample(nrow(abalone),loopSizes[i]*nrow(abalone)),]
+    #The current sample mean is placed in its appropriate row
+    loopMeans[j,i] <- mean(sampleFrame$weight.whole)
+  }
+}
+#Prints the dataframe containing the sample means for all samples of each size
+print(loopMeans)
+```
+
+Question 4:
+
+```{r}
+#So that we may use our function from Question 2, we must create the list loopFrame to hold a separate dataframe for each histogram
+loopFrame <- list()
+#The index variable i is initialized to keep track of which dataframe we are entering in our list
+i <- 1
+#The first 5 dataframes in our list are simply loopMeans itself, as the first 5 histograms are plots of those 5 sets of sample means
+for(j in 1:ncol(loopMeans)){
+  loopFrame[[j]] <- loopMeans
+  i <- i+1
+}
+#The final dataframe is abalone itself, as the final histogram is a plot of the total dataset
+loopFrame[[i]] <- abalone
+#We create a list of titles to feed the function, so that each plot contains the proper set of sample means
+titleList = c("SampleMean1Pct","SampleMean10Pct","SampleMean25Pct","SampleMean50Pct","SampleMean80Pct","weight.whole")
+#Now that our setup is complete, we call samplePlots
+samplePlots(loopFrame,titleList,sampleSizes)
+```
+
+Question 5:
+
+```{r}
+#The dataframe loopStats is generated with 6 columns and 4 rows; the 6 columns are for each sample size, and the 4 rows are for each of the summary statistics as above
+loopStats <- data.frame(matrix(ncol=6,nrow=4))
+#The columns of loopStats are named as above
+names(loopStats) <- paste(sampleSizes*100,"%",sep="")
+#The rows of loopStats are named appropriately, as they are now summary statistics of our sets of sample means
+row.names(loopStats) <- c("MinOfMeans","MaxOfMeans","ReSampleMean","VarOfMeans")
+#We loop through each sample size in loopSizes (each of the original sample sizes that is less than 1.00, or 100%) so we may take the appropriate summary statstics for each set of sample means
+for(i in 1:length(loopSizes)){
+  #We loop through each row in loopStats to take the desired summary statistic
+  for(j in 1:nrow(loopStats)){
+    #Min, Max, Mean, and Variance are placed in their appropriate rows
+    if(j==1){
+      loopStats[j,i] <- min(loopMeans[,i])
+    } else if(j==2){
+      loopStats[j,i] <- max(loopMeans[,i])
+    } else if(j==3){
+      loopStats[j,i] <- mean(loopMeans[,i])
+    } else if(j==4){
+      loopStats[j,i] <- var(loopMeans[,i])
+    }
+  }
+}
+#We now add the final column, that for the 1.00 (100%) sample
+for(j in 1:nrow(loopStats)){
+  #We take the desired summary statistics below; note here that each of these statistics, except for variance, is simply equal to the mean of the entire dataset, as the sample mean for a sample size of 1.00 (100%) is simply the mean of the entire dataset; the variance is zero as all sample means of a full sample are equal to the mean of the entire dataset, as above
+  if(j==1){
+    loopStats[j,6] <- min(sampleStats[3,6])
+  } else if(j==2){
+    loopStats[j,6] <- max(sampleStats[3,6])
+  } else if(j==3){
+    loopStats[j,6] <- mean(sampleStats[3,6])
+  } else if(j==4){
+    loopStats[j,6] <- 0
+  }
+}
+#We append the summary statistics for our sample means to the original dataframe of summary statstics for the samples themselves, and print that dataframe
+sampleStats <- rbind(sampleStats,loopStats)
+print(sampleStats)
+```
+
+Question 6:
+
+```{r}
+#Here we generate a single plot containing a histogram of the entire dataset overlaid with lines representing the 1%, 10%, 25%, 50%, and 80% sample means; lines are created using geom_vline and labeled using geom_text; note that labels are off to the side as the lines are so close together that labeling on or near the line would cloud the plot
+sampleMeanHisto <- ggplot(abalone,aes_string("weight.whole")) + geom_histogram() +
+  ggtitle("SampleMeans") + geom_vline(xintercept=sampleStats[3,1],color="red") +
+  geom_vline(xintercept=sampleStats[3,2],color="yellow") +
+  geom_vline(xintercept=sampleStats[3,3],color="blue") +
+  geom_vline(xintercept=sampleStats[3,4],color="green") +
+  geom_vline(xintercept=sampleStats[3,5],color="pink") +
+  geom_text(aes(3,0,label="Red: 1Pct")) +
+  geom_text(aes(3,100,label="Yellow: 10Pct")) +
+  geom_text(aes(3,200,label="Blue: 25Pct")) +
+  geom_text(aes(3,300,label="Green: 50Pct")) +
+  geom_text(aes(3,400,label="Pink: 80Pct")) +
+  theme(legend.position="none")
+print(sampleMeanHisto)
+```
+
+Question 7:
+
+```{r}
+#Here we generate the same plot as above, this time overlaying lines representing the appropriate resample means rather than the sample means; lines are generated and labeled as above
+reSampleMeanHisto <- ggplot(abalone,aes_string("weight.whole")) + geom_histogram() +
+  ggtitle("ReSampleMeans") + geom_vline(xintercept=sampleStats[7,1],color="red") +
+  geom_vline(xintercept=sampleStats[7,2],color="yellow") +
+  geom_vline(xintercept=sampleStats[7,3],color="blue") +
+  geom_vline(xintercept=sampleStats[7,4],color="green") +
+  geom_vline(xintercept=sampleStats[7,5],color="pink") +
+  geom_text(aes(3,0,label="Red: 1Pct")) +
+  geom_text(aes(3,100,label="Yellow: 10Pct")) +
+  geom_text(aes(3,200,label="Blue: 25Pct")) +
+  geom_text(aes(3,300,label="Green: 50Pct")) +
+  geom_text(aes(3,400,label="Pink: 80Pct")) +
+  theme(legend.position="none")
+print(reSampleMeanHisto)
+```
+
+Question 8:
+
+In each of the steps below, the code from questions 1 through 7 is repeated for the diamonds$carat and faithful$eruptions datasets, respectively. The only changes made are to update the code to examine the desired dataframes and columns. Please see the documentation above for details, as the body of the code is completely the same.
+
+diamonds$carat
+```{r}
+sampleSizes <- c(0.01,0.10,0.25,0.50,0.80,1.00)
+sampleFrame <- list()
+sampleStats <- data.frame(matrix(ncol=6,nrow=4))
+names(sampleStats) <- paste(sampleSizes*100,"%",sep="")
+row.names(sampleStats) <- c("SampleMin","SampleMax","SampleMean","SampleVar")
+for(i in 1:ncol(sampleStats)){
+  sampleFrame[[i]] <- diamonds[sample(nrow(diamonds),sampleSizes[i]*nrow(diamonds)),]
+  for(j in 1:nrow(sampleStats)){
+    if(j==1){
+      sampleStats[j,i] <- min(sampleFrame[[i]]$carat)
+    } else if(j==2){
+      sampleStats[j,i] <- max(sampleFrame[[i]]$carat)
+    } else if(j==3){
+      sampleStats[j,i] <- mean(sampleFrame[[i]]$carat)
+    } else if(j==4){
+      sampleStats[j,i] <- var(sampleFrame[[i]]$carat)
+    }
+  }
+}
+print(sampleStats)
+#------------------------------------------------------------------------------------
+samplePlots(sampleFrame,rep("carat",6),sampleSizes)
+#------------------------------------------------------------------------------------
+loopSizes <- sampleSizes[sampleSizes<1.00]
+loopMeans <- data.frame(matrix(ncol=5,nrow=1000))
+names(loopMeans) <- c("SampleMean1Pct","SampleMean10Pct","SampleMean25Pct","SampleMean50Pct","SampleMean80Pct")
+for(i in 1:length(loopSizes)){
+  for(j in 1:1000){
+    sampleFrame <- diamonds[sample(nrow(diamonds),loopSizes[i]*nrow(diamonds)),]
+    loopMeans[j,i] <- mean(sampleFrame$carat)
+  }
+}
+print(loopMeans)
+#------------------------------------------------------------------------------------
+loopFrame <- list()
+i <- 1
+for(j in 1:ncol(loopMeans)){
+  loopFrame[[j]] <- loopMeans
+  i <- i+1
+}
+loopFrame[[i]] <- diamonds
+titleList = c("SampleMean1Pct","SampleMean10Pct","SampleMean25Pct","SampleMean50Pct","SampleMean80Pct","carat")
+samplePlots(loopFrame,titleList,sampleSizes)
+#------------------------------------------------------------------------------------
+loopStats <- data.frame(matrix(ncol=6,nrow=4))
+names(loopStats) <- paste(sampleSizes*100,"%",sep="")
+row.names(loopStats) <- c("MinOfMeans","MaxOfMeans","ReSampleMean","VarOfMeans")
+for(i in 1:length(loopSizes)){
+  for(j in 1:nrow(loopStats)){
+    if(j==1){
+      loopStats[j,i] <- min(loopMeans[,i])
+    } else if(j==2){
+      loopStats[j,i] <- max(loopMeans[,i])
+    } else if(j==3){
+      loopStats[j,i] <- mean(loopMeans[,i])
+    } else if(j==4){
+      loopStats[j,i] <- var(loopMeans[,i])
+    }
+  }
+}
+for(j in 1:nrow(loopStats)){
+  if(j==1){
+    loopStats[j,6] <- min(sampleStats[3,6])
+  } else if(j==2){
+    loopStats[j,6] <- max(sampleStats[3,6])
+  } else if(j==3){
+    loopStats[j,6] <- mean(sampleStats[3,6])
+  } else if(j==4){
+    loopStats[j,6] <- 0
+  }
+}
+sampleStats <- rbind(sampleStats,loopStats)
+print(sampleStats)
+#------------------------------------------------------------------------------------
+sampleMeanHisto <- ggplot(diamonds,aes_string("carat")) + geom_histogram() +
+  ggtitle("SampleMeans") + geom_vline(xintercept=sampleStats[3,1],color="red") +
+  geom_vline(xintercept=sampleStats[3,2],color="yellow") +
+  geom_vline(xintercept=sampleStats[3,3],color="blue") +
+  geom_vline(xintercept=sampleStats[3,4],color="green") +
+  geom_vline(xintercept=sampleStats[3,5],color="pink") +
+  geom_text(aes(4,0,label="Red: 1Pct")) +
+  geom_text(aes(4,2500,label="Yellow: 10Pct")) +
+  geom_text(aes(4,5000,label="Blue: 25Pct")) +
+  geom_text(aes(4,7500,label="Green: 50Pct")) +
+  geom_text(aes(4,10000,label="Pink: 80Pct")) +
+  theme(legend.position="none")
+print(sampleMeanHisto)
+#------------------------------------------------------------------------------------
+reSampleMeanHisto <- ggplot(diamonds,aes_string("carat")) + geom_histogram() +
+  ggtitle("ReSampleMeans") + geom_vline(xintercept=sampleStats[7,1],color="red") +
+  geom_vline(xintercept=sampleStats[7,2],color="yellow") +
+  geom_vline(xintercept=sampleStats[7,3],color="blue") +
+  geom_vline(xintercept=sampleStats[7,4],color="green") +
+  geom_vline(xintercept=sampleStats[7,5],color="pink") +
+  geom_text(aes(4,0,label="Red: 1Pct")) +
+  geom_text(aes(4,2500,label="Yellow: 10Pct")) +
+  geom_text(aes(4,5000,label="Blue: 25Pct")) +
+  geom_text(aes(4,7500,label="Green: 50Pct")) +
+  geom_text(aes(4,10000,label="Pink: 80Pct")) +
+  theme(legend.position="none")
+print(reSampleMeanHisto)
+```
+
+faithful$eruptions
+```{r}
+sampleSizes <- c(0.01,0.10,0.25,0.50,0.80,1.00)
+sampleFrame <- list()
+sampleStats <- data.frame(matrix(ncol=6,nrow=4))
+names(sampleStats) <- paste(sampleSizes*100,"%",sep="")
+row.names(sampleStats) <- c("SampleMin","SampleMax","SampleMean","SampleVar")
+for(i in 1:ncol(sampleStats)){
+  sampleFrame[[i]] <- faithful[sample(nrow(faithful),sampleSizes[i]*nrow(faithful)),]
+  for(j in 1:nrow(sampleStats)){
+    if(j==1){
+      sampleStats[j,i] <- min(sampleFrame[[i]]$eruptions)
+    } else if(j==2){
+      sampleStats[j,i] <- max(sampleFrame[[i]]$eruptions)
+    } else if(j==3){
+      sampleStats[j,i] <- mean(sampleFrame[[i]]$eruptions)
+    } else if(j==4){
+      sampleStats[j,i] <- var(sampleFrame[[i]]$eruptions)
+    }
+  }
+}
+print(sampleStats)
+#------------------------------------------------------------------------------------
+samplePlots(sampleFrame,rep("eruptions",6),sampleSizes)
+#------------------------------------------------------------------------------------
+loopSizes <- sampleSizes[sampleSizes<1.00]
+loopMeans <- data.frame(matrix(ncol=5,nrow=1000))
+names(loopMeans) <- c("SampleMean1Pct","SampleMean10Pct","SampleMean25Pct","SampleMean50Pct","SampleMean80Pct")
+for(i in 1:length(loopSizes)){
+  for(j in 1:1000){
+    sampleFrame <- faithful[sample(nrow(faithful),loopSizes[i]*nrow(faithful)),]
+    loopMeans[j,i] <- mean(sampleFrame$eruptions)
+  }
+}
+print(loopMeans)
+#------------------------------------------------------------------------------------
+loopFrame <- list()
+i <- 1
+for(j in 1:ncol(loopMeans)){
+  loopFrame[[j]] <- loopMeans
+  i <- i+1
+}
+loopFrame[[i]] <- faithful
+titleList = c("SampleMean1Pct","SampleMean10Pct","SampleMean25Pct","SampleMean50Pct","SampleMean80Pct","eruptions")
+samplePlots(loopFrame,titleList,sampleSizes)
+#------------------------------------------------------------------------------------
+loopStats <- data.frame(matrix(ncol=6,nrow=4))
+names(loopStats) <- paste(sampleSizes*100,"%",sep="")
+row.names(loopStats) <- c("MinOfMeans","MaxOfMeans","ReSampleMean","VarOfMeans")
+for(i in 1:length(loopSizes)){
+  for(j in 1:nrow(loopStats)){
+    if(j==1){
+      loopStats[j,i] <- min(loopMeans[,i])
+    } else if(j==2){
+      loopStats[j,i] <- max(loopMeans[,i])
+    } else if(j==3){
+      loopStats[j,i] <- mean(loopMeans[,i])
+    } else if(j==4){
+      loopStats[j,i] <- var(loopMeans[,i])
+    }
+  }
+}
+for(j in 1:nrow(loopStats)){
+  if(j==1){
+    loopStats[j,6] <- min(sampleStats[3,6])
+  } else if(j==2){
+    loopStats[j,6] <- max(sampleStats[3,6])
+  } else if(j==3){
+    loopStats[j,6] <- mean(sampleStats[3,6])
+  } else if(j==4){
+    loopStats[j,6] <- 0
+  }
+}
+sampleStats <- rbind(sampleStats,loopStats)
+print(sampleStats)
+#------------------------------------------------------------------------------------
+sampleMeanHisto <- ggplot(faithful,aes_string("eruptions")) + geom_histogram() +
+  ggtitle("SampleMeans") + geom_vline(xintercept=sampleStats[3,1],color="red") +
+  geom_vline(xintercept=sampleStats[3,2],color="yellow") +
+  geom_vline(xintercept=sampleStats[3,3],color="blue") +
+  geom_vline(xintercept=sampleStats[3,4],color="green") +
+  geom_vline(xintercept=sampleStats[3,5],color="pink") +
+  geom_text(aes(-0.1,0,label="Red: 1Pct")) +
+  geom_text(aes(0,10,label="Yellow: 10Pct")) +
+  geom_text(aes(0,20,label="Blue: 25Pct")) +
+  geom_text(aes(0,30,label="Green: 50Pct")) +
+  geom_text(aes(0,40,label="Pink: 80Pct")) +
+  theme(legend.position="none")
+print(sampleMeanHisto)
+#------------------------------------------------------------------------------------
+reSampleMeanHisto <- ggplot(faithful,aes_string("eruptions")) + geom_histogram() +
+  ggtitle("ReSampleMeans") + geom_vline(xintercept=sampleStats[7,1],color="red") +
+  geom_vline(xintercept=sampleStats[7,2],color="yellow") +
+  geom_vline(xintercept=sampleStats[7,3],color="blue") +
+  geom_vline(xintercept=sampleStats[7,4],color="green") +
+  geom_vline(xintercept=sampleStats[7,5],color="pink") +
+  geom_text(aes(-0.1,0,label="Red: 1Pct")) +
+  geom_text(aes(0,10,label="Yellow: 10Pct")) +
+  geom_text(aes(0,20,label="Blue: 25Pct")) +
+  geom_text(aes(0,30,label="Green: 50Pct")) +
+  geom_text(aes(0,40,label="Pink: 80Pct")) +
+  theme(legend.position="none")
+print(reSampleMeanHisto)
+```
+
+Question 9:
+
+This code demonstrates two key phenomena regarding distributions and sample sizes. First, we see that as sample size increases, the distribution and summary statistics of that sample approach the distribution and summary statistics of the entire dataset. This point is demonstrated by the plots and summary statistics generated in Questions 1 and 2, as the output generated here for each sample size approaches that of the entire dataset as our sample size increases. We also see in Question 4 that as sample size increases, the distribution of sample means grows tighter and tighter about the mean of the entire dataset.
+
+Next, Questions 3 through 7 demonstrate that as we take repeated samples of a given size, the mean of those sample means quickly approaches the mean of the entire dataset, for each sample size. Examining the summary statistics table from Question 5, we see much greater variance between the sample means than between the resample means, even at just the 1% sample size. We also see that the resample means plotted on the histogram from Question 7 are much tighter about the mean of the entire dataset than the sample means plotted on the histogram from Question 6.
+
+In sum, this code demonstrates two ways to generate reliable summary statistics for a dataset. First, we may simply take relatively large samples. If taking large samples, however, is for any reason impossible, we may also take many repeated small samples. As demonstrated here, both sampling methods generate sample means that are reasonably close to the mean of the entire dataset.
+
